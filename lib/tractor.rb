@@ -18,15 +18,7 @@ module Tractor
       at_exit { `kill #{redis_pid}` if Process.pid == parent_pid }
 
       const_set :R, (Redis.new path: 'tractor.sock')
-
-      20.times do
-        begin
-          break if R.ping == 'PONG'
-          sleep 0.01
-        rescue Errno::ENOENT
-          next
-        end
-      end
+      sleep 0.01 until File.exist? 'tractor.sock'
 
       $stdout = stdout
     end
