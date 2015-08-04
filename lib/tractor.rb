@@ -1,4 +1,5 @@
 require 'redis'
+require 'suppress_output'
 
 module Tractor
   class << self
@@ -10,17 +11,15 @@ module Tractor
     private
 
     def setup_redis
-      stdout = $stdout.clone
-      $stdout.reopen (File.new '/dev/null', 'w')
+      suppress_output do
+        socket = File.expand_path 'tractor.sock'
 
-      redis_pid = spawn 'redis-server --port 0 --unixsocket tractor.sock'
-      parent_pid = Process.pid
-      at_exit { `kill #{redis_pid}` if Process.pid == parent_pid }
+        redis_pid, parent_pid = (spawn "redis-server --port 0 --unixsocket #{socket}"), Process.pid
+        at_exit { `kill #{redis_pid}` if Process.pid == parent_pid }
 
-      const_set :R, (Redis.new path: 'tractor.sock')
-      sleep 0.01 until File.exist? 'tractor.sock'
-
-      $stdout = stdout
+        const_set :R, (Redis.new path: socket)
+        sleep 0.01 until File.exist? socket
+      end
     end
 
     def patch_Integer_shamelessly

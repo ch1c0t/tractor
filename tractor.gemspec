@@ -5,4 +5,5 @@ Gem::Specification.new do |g|
   g.authors = ['Anatoly Chernow']
 
   g.add_dependency 'redis'
+  g.add_dependency 'suppress_output'
 end
